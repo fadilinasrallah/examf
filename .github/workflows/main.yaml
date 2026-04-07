@@ -3,15 +3,13 @@ name: Test
 on:
   push:
     branches:
-      - main
       - new
-    tags:
-      - 1.2v
-  pull_request:
-    branches:
-      - main
 
   workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-hadchi:
@@ -20,13 +18,23 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      
-      - name: nodejs setup
-        uses: actions/setup-node@v3
-        with: 
-          node-version: 20
-      - name: install npm
-        run: npm ci
+      - name: docker it
+        run: docker compose up -d
+      # - name: test docker
+      #   run: docker build -t test .
 
-      - name: start
-        run: npm start
+      # - name: connect to git container
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.repository_owner }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: build and push
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: |
+      #       ghcr.io/fadilinasrallah/test:latest
+      #       ghcr.io/fadilinasrallah/test:prod

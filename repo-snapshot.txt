@@ -1,0 +1,129 @@
+# Repo Snapshot
+# Excludes: .git
+# Format: each file is listed with its relative path followed by its exact text contents.
+
+--- FILE: .github/workflows/main.yaml ---
+name: Test
+
+on:
+  push:
+    branches:
+      - new
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-hadchi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      
+      - name: test docker
+        run: docker build -t test .
+
+      - name: connect to git container
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/fadilinasrallah/test:latest
+            ghcr.io/fadilinasrallah/test:prod
+
+--- FILE: docker-compose.yml ---
+services:
+  backend:
+    build: .
+    ports: ["3000:3001"]
+  
+  frontend:
+    depends_on:
+      - backend
+    
+    image: curlimages/curl:latest
+    entrypoint: ["sh", "-c", "sleep 2 && curl http://backend:3001"]
+
+--- FILE: Dockerfile ---
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --production
+
+COPY . .
+
+EXPOSE 3001
+
+CMD ["npm", "start"]
+
+--- FILE: index.js ---
+const http = require('http');
+const _ = require('lodash');
+
+const port = process.env.PORT || 3001;
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end(_.upperFirst('github actions test ran successfully'));
+});
+
+server.listen(port, () => {
+  console.log(`server listening on port ${port}`);
+});
+
+--- FILE: package-lock.json ---
+{
+  "name": "github-actions-node-test",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "github-actions-node-test",
+      "version": "1.0.0",
+      "dependencies": {
+        "lodash": "^4.17.21"
+      }
+    },
+    "deps/test-helper": {
+      "version": "1.0.0",
+      "extraneous": true
+    },
+    "node_modules/lodash": {
+      "version": "4.17.21",
+      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
+      "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
+      "license": "MIT"
+    }
+  }
+}
+
+--- FILE: package.json ---
+{
+  "name": "github-actions-node-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple Node.js app for GitHub Actions testing.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}
