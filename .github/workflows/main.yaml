@@ -6,7 +6,7 @@ on:
       - main
     tags:
       - 1.2v
-  pull_reqeuest:
+  pull_request:
     branches:
       - main
 
