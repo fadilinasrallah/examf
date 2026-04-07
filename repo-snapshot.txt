@@ -43,6 +43,19 @@ jobs:
             ghcr.io/fadilinasrallah/test:latest
             ghcr.io/fadilinasrallah/test:prod
 
+--- FILE: docker-compose.yml ---
+services:
+  backend:
+    build: .
+    ports: ["3000:3001"]
+  
+  frontend:
+    depends_on:
+      - backend
+    
+    image: curlimages/curl:latest
+    entrypoint: ["sh", "-c", "sleep 2 && curl http://backend:3001"]
+
 --- FILE: Dockerfile ---
 FROM node:18-alpine
 
@@ -57,20 +70,6 @@ COPY . .
 EXPOSE 3001
 
 CMD ["npm", "start"]
-
---- FILE: docker-compose.yml ---
-services:
-  backend:
-    build: .
-    ports: ["3000:3001"]
-  
-  frontend:
-    depends_on:
-      - backend
-    
-    image: ubuntu:latest
-    command:
-      - "curl http://backend:3001"
 
 --- FILE: index.js ---
 const http = require('http');
