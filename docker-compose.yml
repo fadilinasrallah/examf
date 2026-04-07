@@ -7,6 +7,5 @@ services:
     depends_on:
       - backend
     
-    image: ubuntu:latest
-    command:
-      - "curl http://backend:3001"
+    image: curlimages/curl:latest
+    entrypoint: ["sh", "-c", "sleep 2 && curl http://backend:3001"]
