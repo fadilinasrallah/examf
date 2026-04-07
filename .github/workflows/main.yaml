@@ -17,3 +17,18 @@ jobs:
       
       - name: test docker
         run: docker build -t test .
+
+      - name: connect to git container
+        uses: docker/login-actions@v3
+        with:
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/fadilinasrallah/test:latest
+            ghcr.io/fadilinasrallah/test:prod
